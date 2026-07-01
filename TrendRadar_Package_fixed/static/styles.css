@@ -1,0 +1,254 @@
+/* TrendRadar 控制台样式 - 完全匹配原始报告页面 */
+* { 
+    box-sizing: border-box; 
+}
+
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0; 
+    padding: 16px; 
+    background: linear-gradient(135deg, #dce4ff 0%, #ffe6e8 100%);
+    color: #333;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1440px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+
+.header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+}
+
+.header-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+}
+
+.content {
+    padding: 24px;
+}
+
+.footer {
+    margin-top: 32px;
+    padding: 20px 24px;
+    background: #f8f9fa;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.footer-content {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.footer-link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: #7c3aed;
+    text-decoration: underline;
+}
+
+.project-name {
+    font-weight: 600;
+    color: #374151;
+}
+
+/* 控制台特有样式 */
+.section { 
+    margin: 16px 0; 
+    padding: 12px; 
+    border: 1px solid #eee; 
+    border-radius: 8px; 
+    background: #fefefe;
+    transition: all 0.2s ease;
+}
+
+.section:hover {
+    border-color: #ddd;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.section h2 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.row { 
+    display: flex; 
+    gap: 12px; 
+    align-items: center; 
+    flex-wrap: wrap; 
+}
+
+.col { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+}
+
+label { 
+    font-weight: 600; 
+    font-size: 14px;
+    color: #374151;
+}
+
+input[type="text"], 
+input[type="password"], 
+select, 
+textarea { 
+    padding: 8px 12px; 
+    border: 1px solid #d1d5db; 
+    border-radius: 6px; 
+    min-width: 220px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+input[type="text"]:focus, 
+input[type="password"]:focus, 
+select:focus, 
+textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+button { 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    border: 1px solid #d1d5db; 
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    background: white;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.muted { 
+    color: #6b7280; 
+    font-size: 13px; 
+}
+
+.hidden { 
+    display: none; 
+}
+
+.token-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, minmax(220px, 1fr)); 
+    gap: 12px; 
+}
+
+.inline-actions { 
+    display: flex; 
+    gap: 8px; 
+    align-items: center; 
+}
+
+.readonly { 
+    background: #f9fafb; 
+    color: #6b7280;
+}
+
+.badge { 
+    display: inline-block; 
+    padding: 2px 6px; 
+    border-radius: 4px; 
+    background: #f3f4f6; 
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+details summary { 
+    cursor: pointer; 
+    font-weight: 600;
+    padding: 8px 0;
+    color: #374151;
+    transition: color 0.2s ease;
+}
+
+details summary:hover {
+    color: #4f46e5;
+}
+
+details[open] summary {
+    color: #4f46e5;
+    margin-bottom: 8px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .token-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    input[type="text"], 
+    input[type="password"], 
+    select, 
+    textarea {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    body { 
+        padding: 12px; 
+    }
+    
+    .header { 
+        padding: 24px 20px; 
+    }
+    
+    .content { 
+        padding: 20px; 
+    }
+    
+    .footer { 
+        padding: 16px 20px; 
+    }
+}

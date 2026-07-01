@@ -1,0 +1,151 @@
+app:
+  show_version_update: true
+  version_check_url: https://raw.githubusercontent.com/sansan0/TrendRadar/refs/heads/master/version
+crawler:
+  default_proxy: http://127.0.0.1:10086
+  enable_crawler: true
+  request_interval: 1000
+  use_proxy: false
+notification:
+  batch_send_interval: 1
+  dingtalk_batch_size: 20000
+  enable_notification: false
+  feishu_message_separator: ━━━━━━━━━━━━━━━━━━━
+  message_batch_size: 4000
+  push_window:
+    enabled: false
+    once_per_day: true
+    push_record_retention_days: 7
+    time_range:
+      end: '22:00'
+      start: '20:00'
+  webhooks:
+    dingtalk_url: ''
+    email_from: ''
+    email_password: ''
+    email_smtp_port: ''
+    email_smtp_server: ''
+    email_to: ''
+    feishu_url: ''
+    ntfy_server_url: https://ntfy.sh
+    ntfy_token: ''
+    ntfy_topic: ''
+    telegram_bot_token: ''
+    telegram_chat_id: ''
+    wework_url: ''
+platform: volcengine
+platforms:
+  # === 综合新闻媒体类 ===
+  - id: toutiao
+    name: 今日头条
+  - id: baidu
+    name: 百度热搜
+  - id: thepaper
+    name: 澎湃新闻
+  - id: ifeng
+    name: 凤凰网
+  - id: cankaoxiaoxi
+    name: 参考消息
+  - id: sputniknewscn
+    name: 卫星通讯社
+  - id: zaobao
+    name: 联合早报
+  - id: mktnews
+    name: MKT新闻
+  - id: kaopu
+    name: 靠谱新闻
+
+  # === 财经投资类 ===
+  - id: wallstreetcn-hot
+    name: 华尔街见闻 最热
+  - id: wallstreetcn-quick
+    name: 华尔街见闻 快讯
+  - id: wallstreetcn-news
+    name: 华尔街见闻 最新
+  - id: cls-hot
+    name: 财联社热门
+  - id: gelonghui
+    name: 格隆汇
+  - id: xueqiu
+    name: 雪球
+  - id: jin10
+    name: 金十数据
+  - id: fastbull
+    name: 快讯通
+
+  # === 社交/短视频/娱乐类 ===
+  - id: weibo
+    name: 微博
+  - id: douyin
+    name: 抖音
+  - id: bilibili-hot-search
+    name: bilibili 热搜
+  - id: tieba
+    name: 贴吧
+  - id: zhihu
+    name: 知乎
+  - id: hupu
+    name: 虎扑
+
+  # === 科技类平台 ===
+  - id: ithome
+    name: IT之家
+  - id: juejin
+    name: 掘金
+  - id: github
+    name: GitHub
+  - id: hackernews
+    name: Hacker News
+  - id: solidot
+    name: Solidot
+  - id: v2ex
+    name: V2EX
+  - id: nowcoder
+    name: 牛客网
+  - id: pcbeta
+    name: 远景论坛
+  - id: sspai
+    name: 少数派
+  - id: producthunt
+    name: ProductHunt
+
+  # === 其他/工具类 ===
+  - id: chongbuluo
+    name: 虫部落
+
+  # ======================================================
+  # 暂时失败的渠道（可能需要修复或接口已变更）
+  # 备注：以下渠道在测试中抓取失败，已暂时注释
+  # 如需使用请检查API接口状态或联系维护团队
+  # ======================================================
+  # 失败的综合新闻媒体类
+  # - id: sina
+  #   name: 新浪
+  # - id: sohu
+  #   name: 搜狐
+  # 失败的财经类
+  # - id: ghxi
+  #   name: 国海证券
+  # 失败的社交/短视频类
+  # - id: kuaishou
+  #   name: 快手
+  # - id: smzdm
+  #   name: 什么值得买
+  # 失败的科技类
+  # - id: 36kr
+  #   name: 36氪
+  # - id: linuxdo
+  #   name: LinuxDo
+report:
+  mode: daily
+  rank_threshold: 5
+tokens:
+  # 请在此处填入您的API Token
+  # 支持的平台: alibabacloud, siliconflow, volcengine
+  aliyun: ''
+  siliconflow: ''
+  volcengine: ''
+weight:
+  frequency_weight: 0.5
+  hotness_weight: 0.1
+  rank_weight: 0.4

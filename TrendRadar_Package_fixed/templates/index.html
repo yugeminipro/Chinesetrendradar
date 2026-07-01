@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrendRadar - 主界面</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+        .section { margin: 16px 0; padding: 20px; border: 1px solid #eee; border-radius: 8px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .nav-bar { display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .nav-links { display: flex; gap: 14px; }
+        .nav-link { padding: 10px 20px; background: #f3f4f6; color: #374151; text-decoration: none; border: 1px solid #e5e7eb; border-radius: 999px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+        .nav-link:hover { background: linear-gradient(135deg, #e0f2f1, #c7f3e8); color: #065f46; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.20); border-color: #a7f3d0; }
+        .nav-link.active { background: linear-gradient(135deg, #34d399, #10b981); color: white; border-color: #10b981; box-shadow: 0 4px 12px rgba(16,185,129,0.30); }
+        .main-actions { display: flex; flex-direction: column; gap: 12px; justify-content: center; align-items: center; margin: 24px 0; }
+        .action-btn { padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; min-width: 160px; }
+        /* 统一两枚按钮的行布局，以保证三处按钮在竖直方向对齐 */
+        .btn-row { display: grid; grid-template-columns: 210px 210px; gap: 16px; justify-content: center; justify-items: center; align-items: center; margin: 0 auto; }
+        .btn-row .action-btn { width: 210px; }
+        /* 程序控制窗格边缘进度条 */
+        .edge-progress { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+        .edge-progress .progress-row { display: flex; align-items: center; gap: 8px; }
+        .progress-bar.thin { width: 100%; height: 6px; background: #eef2f7; border-radius: 6px; overflow: hidden; }
+        .progress-bar.thin .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.3s ease; }
+        .progress-label { min-width: 40px; font-size: 12px; color: #6b7280; text-align: right; }
+        .btn-primary { background: linear-gradient(135deg, #4c51bf, #667eea); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(76, 81, 191, 0.4); }
+        .btn-secondary { background: linear-gradient(135deg, #38a169, #48bb78); color: white; }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(56, 161, 105, 0.4); }
+        .btn-disabled { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
+        .progress-container { margin: 20px 0; }
+        .progress-bar { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.3s ease; }
+        .progress-active { animation: progress-pulse 2s infinite; }
+        @keyframes progress-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes gradient-shift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        .progress-bar .progress-fill.progress-active { background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #f97316, #14b8a6, #22c55e); background-size: 300% 100%; animation: gradient-shift 2s linear infinite; }
+        .status-message { margin: 12px 0; padding: 12px; border-radius: 6px; font-weight: 500; }
+        .status-idle { background: #f9fafb; color: #374151; border: 1px solid #e5e7eb; }
+        .status-running { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .status-completed { background: #d1fae5; color: #065f46; border: 1px solid #34d399; }
+        .status-error { background: #fee2e2; color: #dc2626; border: 1px solid #f87171; }
+        .preview-container { margin: 20px 0; height: 50vh; overflow-x: auto; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; display: flex; flex-direction: column; }
+        .preview-content { padding: 16px; background: #fafafa; font-family: monospace; font-size: 14px; line-height: 1.5; height: auto; overflow: visible; }
+        .preview-empty { padding: 40px; text-align: center; color: #6b7280; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .news-preview h4 { margin: 0 0 16px 0; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .news-list { margin: 12px 0; }
+        .news-item-preview { margin: 8px 0; padding: 12px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; }
+        .news-title { font-weight: 500; color: #374151; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.4; }
+        .news-summary { margin: 16px 0 0 0; padding: 8px; background: #f3f4f6; border-radius: 4px; color: #6b7280; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .raw-preview, .text-preview pre { background: #f8f9fa; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.4; }
+        .no-content { color: #9ca3af; font-style: italic; text-align: center; padding: 20px; }
+        .filter-result h4 { margin: 0 0 16px 0; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .filtered-news-list { margin: 12px 0; }
+        .filtered-news-item { display: flex; margin: 12px 0; padding: 16px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .news-rank { flex-shrink: 0; width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; margin-right: 12px; }
+        .news-content { flex: 1; }
+        .filtered-news-item .news-title { font-weight: 600; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.4; margin-bottom: 8px; word-break: break-word; overflow-wrap: anywhere; }
+        .filtered-news-item .news-summary { margin: 0; padding: 0; background: none; color: #6b7280; font-size: 14px; line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; }
+        .news-url { margin-top: 8px; }
+        .news-url a { color: #6366f1; text-decoration: none; font-size: 13px; word-break: break-all; }
+        .news-url a:hover { text-decoration: underline; }
+        .filter-summary { margin: 16px 0 0 0; padding: 12px; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; color: #0c4a6e; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; }
+        .single-result, .text-result pre, .raw-result pre { background: #f8f9fa; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.4; font-family: monospace; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        .task-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .task-grid .section { min-width: 0; }
+        .preview-container { width: 100%; min-height: 420px; overflow-x: auto; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; }
+        .muted { color: #666; font-size: 12px; }
+        .inline-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .inline-group input[type="number"] { width: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; }
+        .logs-container { margin-top: 10px; max-height: 180px; overflow-y: auto; overflow-x: auto; background: #0f172a; color: #cbd5e1; font-family: monospace; font-size: 12px; border-radius: 6px; padding: 10px; border: 1px solid #1f2937; }
+        .logs-container pre { margin: 0; white-space: pre; overflow: auto; max-width: 100%; }
+        .logs-title { font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+        .schedule-grid { display: grid; grid-template-columns: 1fr; gap: 20px; justify-items: center; }
+        .schedule-controls { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+        .schedule-controls .inline-group { display: flex; gap: 12px; justify-content: flex-start; }
+        .schedule-controls .form-group { margin: 0; text-align: center; }
+        .schedule-controls .form-group label { display: block; margin-bottom: 6px; }
+        .schedule-controls .form-group input { text-align: center; }
+        .progress-active { animation: progress-pulse 2s infinite; }
+        @keyframes progress-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .results-list { margin-top: 16px; }
+        /* 页面主布局：左侧控制区 + 右侧结果区 */
+        .page-grid { display: grid; grid-template-columns: 480px 1fr; gap: 24px; align-items: stretch; }
+        .left-column .section { margin-bottom: 16px; }
+        .right-column .section { margin-bottom: 16px; }
+        /* 右侧列自适应填充，使预览窗格底部与左侧循环执行底部对齐 */
+        .right-column .section { display: flex; flex-direction: column; height: 100%; max-height: 100vh; }
+        .right-column .preview-container { height: auto; min-height: 0; flex: 1 1 auto; margin: 0; }
+        #mainPreviewContent { flex: 1 1 auto; min-height: 0; display: flex; }
+        /* 结果预览列表窗口：在右侧列顶部，保留较小高度 */
+        #resultsContainer { max-height: 34vh; overflow-y: auto; }
+        .result-date-group { margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+        .result-date-header { background: #f9fafb; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151; }
+        .result-files { padding: 0; }
+        .result-file-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s; }
+        .result-file-item:hover { background: #f9fafb; }
+        .result-file-item:last-child { border-bottom: none; }
+        .file-info { flex: 1; }
+        .file-name { font-weight: 500; color: #1f2937; margin-bottom: 4px; }
+        .file-meta { font-size: 12px; color: #6b7280; }
+        .file-actions { display: flex; gap: 8px; }
+        .file-btn { padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .btn-preview { background: #3b82f6; color: white; }
+        .btn-preview:hover { background: #2563eb; }
+        .btn-download { background: #10b981; color: white; }
+        .btn-download:hover { background: #059669; }
+        .file-type-badge { display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; border-radius: 3px; margin-right: 8px; }
+        .badge-html { background: #fef3c7; color: #92400e; }
+        .badge-json { background: #dbeafe; color: #1e40af; }
+        .badge-txt { background: #d1fae5; color: #065f46; }
+         .preview-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 1000; }
+         .preview-modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 1000px; height: 80%; background: white; border-radius: 8px; display: flex; flex-direction: column; }
+         .preview-modal-header { padding: 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+         .preview-modal-title { font-weight: 600; color: #1f2937; }
+         .preview-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; }
+         .preview-modal-body { flex: 1; overflow: auto; padding: 16px; }
+         /* 结果预览模态：让 iframe 填满内容区域 */
+         #previewModal .preview-modal-body { overflow: hidden; display: flex; flex-direction: column; }
+         #previewModal #previewContent { flex: 1 1 auto; min-height: 0; padding: 0; display: flex; flex-direction: column; }
+         #previewModal #previewContent iframe { flex: 1 1 auto; height: 100%; }
+        .preview-content { font-family: monospace; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+        .preview-html { font-family: inherit; font-size: 14px; line-height: 1.6; padding: 0; }
+        .preview-html iframe { width: 100%; height: 100%; border: none; }
+
+        /* 生成内容模态框：仅保留一个滚动条（iframe内部滚动），底部按钮常显 */
+        #makeVideoModal .preview-modal-body { overflow: hidden; display: flex; flex-direction: column; }
+        #makeVideoModal #makeVideoContent { flex: 1 1 auto; min-height: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+        #makeVideoModal #makeVideoContent iframe { flex: 1 1 auto; height: 100%; }
+        #makeVideoModal .confirm-actions { flex-shrink: 0; padding-top: 12px; border-top: 1px solid #e5e7eb; background: #fff; }
+
+        /* 生成类型：大号框选样式 */
+        #makeVideoModal .gen-type-group { display: flex; gap: 10px; }
+        #makeVideoModal label.gen-type-option { position: relative; display: inline-block; }
+        #makeVideoModal label.gen-type-option input { position: absolute; opacity: 0; pointer-events: none; }
+        #makeVideoModal .gen-type-box { display: inline-block; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; user-select: none; background: #fff; }
+        #makeVideoModal label.gen-type-option:hover .gen-type-box { border-color: #93c5fd; }
+        #makeVideoModal label.gen-type-option input:checked + .gen-type-box { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12) inset; background: #f8fafc; }
+
+         /* 确认清空模态框样式优化 */
+         .confirm-modal .preview-modal-content { width: 420px; max-width: 95%; height: auto; }
+         .confirm-modal .preview-modal-header { justify-content: flex-end; }
+         .confirm-modal .preview-modal-title { text-align: center; width: 100%; }
+         .confirm-modal .preview-modal-body { padding: 20px; text-align: center; }
+         .confirm-text { font-size: 15px; color: #374151; }
+         .confirm-actions { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+         .confirm-modal .action-btn { min-width: auto; padding: 8px 12px; font-size: 14px; border-radius: 6px; }
+        @media (max-width: 768px) { 
+            .task-grid { grid-template-columns: 1fr; }
+            .schedule-grid { grid-template-columns: 1fr; }
+            .schedule-controls { grid-template-columns: 1fr; }
+            .schedule-controls .inline-group { justify-content: flex-start; }
+            .main-actions { flex-direction: column; align-items: center; }
+            .file-actions { flex-direction: column; gap: 4px; }
+            .preview-modal-content { width: 95%; height: 90%; }
+        }
+    </style>
+    <style>
+        /* 平台侧栏样式（随页面一起滚动，移除自身滚动条） */
+        .platform-sidebar { position: absolute; top: 160px; left: 16px; width: 240px; overflow: visible; background: transparent; border: none; border-radius: 0; box-shadow: none; padding: 0; z-index: 500; }
+        .platform-sidebar .sidebar-title { font-weight: 600; color: #374151; margin-bottom: 8px; }
+        .platform-sidebar .sidebar-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+        .platform-sidebar .btn-mini { padding: 6px 10px; font-size: 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb; color: #374151; cursor: pointer; }
+        .platform-sidebar .btn-mini:hover { background: #f3f4f6; }
+        .platform-sidebar .sidebar-list { display: flex; flex-direction: column; gap: 6px; }
+        .platform-sidebar label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; }
+        .platform-sidebar .sidebar-status { font-size: 12px; color: #6b7280; margin-top: 8px; }
+        .container.has-sidebar { margin-left: 272px; }
+        @media (max-width: 1024px) { .platform-sidebar { display: none !important; } .container.has-sidebar { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <!-- 轻量弹窗容器：用于展示生成完毕提示 -->
+    <div id="toastContainer" style="position:fixed; top:16px; right:16px; z-index:2000; display:flex; flex-direction:column; gap:8px;"></div>
+    <div class="header">
+        <div class="header-title">TrendRadar - 主界面</div>
+    </div>
+
+    <div class="container">
+        <!-- 平台筛选侧栏：展示所有目标平台，支持勾选启用/取消选择 -->
+        <aside id="platformSidebar" class="platform-sidebar" aria-label="平台筛选" style="display:none;">
+            <div class="sidebar-title">平台筛选</div>
+            <div class="sidebar-actions"><button id="selectAllBtn" class="btn-mini">全选</button></div>
+            <div id="platformList" class="sidebar-list"></div>
+            <div id="platformSaveStatus" class="sidebar-status muted" style="display:none;"></div>
+        </aside>
+        <div class="content">
+            <!-- 导航栏 -->
+            <div class="nav-bar">
+                <div class="nav-links">
+                    <a href="/" class="nav-link active">主界面</a>
+                    <a href="/config" class="nav-link">配置设置</a>
+                </div>
+            </div>
+
+            <div class="page-grid">
+            <div class="left-column">
+
+            <!-- 主要操作区域 -->
+            <div class="section">
+                <h3>程序控制</h3>
+                <div class="main-actions">
+                    <div class="btn-row">
+                        <button id="runMainBtn" class="action-btn btn-primary">
+                            🚀 开始获取新闻
+                        </button>
+                        <button id="runFilterBtn" class="action-btn btn-secondary" disabled>
+                            🤖 AI智能筛选
+                        </button>
+                    </div>
+                    <div class="inline-group" style="justify-content: center;">
+                        <label for="filterLimit">筛选数量</label>
+                        <input id="filterLimit" type="number" min="1" value="5" />
+                        <span id="filterPrecheckMsg" class="muted" style="display:none; margin-left:8px;">未检测到当日汇总.html，请先点击“开始获取新闻”</span>
+                    </div>
+                    <!-- 程序控制窗格的边缘进度条：仅显示进度与百分比 -->
+                    <div class="edge-progress">
+                        <div class="progress-row">
+                            <div class="progress-bar thin">
+                                <div id="mainProgress" class="progress-fill" style="width:0%"></div>
+                            </div>
+                            <span id="mainStatus" class="progress-label">0%</span>
+                        </div>
+                        <div class="progress-row">
+                            <div class="progress-bar thin">
+                                <div id="filterProgress" class="progress-fill" style="width:0%"></div>
+                            </div>
+                            <span id="filterStatus" class="progress-label">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="muted" style="text-align: center; margin-top: 12px;">
+                    点击"开始获取新闻"运行爬虫程序，完成后可进行AI筛选
+                </p>
+            </div>
+            <!-- 结果预览列表：移至原任务状态窗格位置（左侧列） -->
+            <div class="section">
+                <h3>结果预览列表</h3>
+                <div class="btn-row">
+                    <button id="refreshResultsBtn" class="action-btn btn-secondary">
+                        🔄 刷新结果列表
+                    </button>
+                    <button id="clearResultsBtn" class="action-btn" style="background: #dc2626; color: white;">
+                        🗑️ 清空所有结果
+                    </button>
+                </div>
+                <div id="resultsContainer">
+                    <div class="preview-empty">
+                        <div>暂无结果文件，请先运行新闻获取任务</div>
+                    </div>
+                </div>
+            </div>
+            <!-- 循环执行控制（移到左侧列） -->
+            <div class="section">
+                <h3>循环执行</h3>
+                <div class="schedule-grid">
+                    <div class="schedule-controls">
+                        <div class="btn-row">
+                            <button id="startScheduleBtn" class="action-btn btn-primary">启动循环</button>
+                            <button id="stopScheduleBtn" class="action-btn btn-secondary">停止循环</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="scheduleInterval">时间间隔（分钟）</label>
+                            <input id="scheduleInterval" type="number" min="1" value="30" />
+                        </div>
+                    </div>
+                    <div>
+                        <div id="scheduleStatus" class="status-message status-idle">循环未启动</div>
+                        <div class="muted">下一次执行时间：<span id="nextRunTime">-</span></div>
+                    </div>
+                </div>
+            </div>
+            </div><!-- end left-column -->
+
+            <div class="right-column">
+            <!-- 结果预览窗格区域（右侧列单独一列） -->
+            <div class="section">
+                <h3>结果预览窗格</h3>
+                <div class="preview-container">
+                    <div id="mainPreviewContent" class="preview-empty">
+                        暂无内容，请先运行新闻获取程序
+                    </div>
+                </div>
+                <div id="webPreviewLink" style="text-align: center; margin-top: 8px; display: none;">
+                    <a href="/view/latest" target="_blank">🔗 打开独立网页预览</a>
+                </div>
+                <!-- 文章生成结果（全局显示区） -->
+                <div id="articleResultGlobal" class="preview-container" style="margin-top: 12px; display: none; min-height: 0; height: auto; max-height: 40vh; overflow: auto;">
+                    <div class="preview-content" style="height: auto; overflow: visible;">
+                        <pre id="articleResultContent" style="white-space: pre-wrap; word-wrap: break-word; background:#f9fafb; padding:8px; border:1px solid #e5e7eb; border-radius:6px; max-height: 38vh; overflow: auto;"></pre>
+                        <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+                            <button id="copyArticleGlobalBtn" class="action-btn btn-secondary">复制内容</button>
+                            <span id="copyArticleGlobalStatus" class="muted" style="display:none;">已复制</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 视频生成结果（全局显示区） -->
+                <div id="videoResultGlobal" class="preview-container" style="margin-top: 0; display: none; min-height: 0; height: auto; overflow: hidden; padding: 0; flex: 0 0 auto;">
+                    <div class="preview-content" style="height: auto; overflow: hidden; padding: 0;">
+                        <div id="videoDownloadArea" class="text-preview" style="text-align: left; margin-top: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; padding: 8px 12px; height: auto; width: 100%; max-width: 860px; box-sizing: border-box;">
+                            <span style="flex: 0 0 auto;">下载链接：</span>
+                            <a id="videoDownloadLink" href="#" target="_blank" style="display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; max-width: 100%;"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div><!-- end right-column -->
+            </div><!-- end page-grid -->
+
+            <!-- 执行日志：移动到页面最底部（两个任务的日志） -->
+            <div class="section" style="margin-top: 16px;">
+                <h3>执行日志</h3>
+                <div class="logs-container" id="mainLogs">
+                    <div class="logs-title">新闻获取日志</div>
+                    <pre id="mainLogsPre">(暂无日志)</pre>
+                </div>
+                <div class="logs-container" id="filterLogs" style="margin-top: 12px;">
+                    <div class="logs-title">AI筛选日志</div>
+                    <pre id="filterLogsPre">(暂无日志)</pre>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <div class="footer-content">
+                由 <span class="project-name">TrendRadar</span> 生成 · 
+                <a href="https://github.com/sansan0/TrendRadar" target="_blank" class="footer-link">
+                    GitHub 开源项目
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预览模态框 -->
+    <div id="previewModal" class="preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <div class="preview-modal-title" id="previewTitle">文件预览</div>
+                <button class="preview-modal-close" onclick="closePreviewModal()">&times;</button>
+            </div>
+            <div class="preview-modal-body">
+                <div id="previewContent" class="preview-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成内容选择模态框 -->
+    <div id="makeVideoModal" class="preview-modal" style="display: none;">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <div class="preview-modal-title" id="makeVideoTitle">生成内容 - 选择新闻与图片</div>
+                <button class="preview-modal-close" onclick="closeMakeVideoModal()">&times;</button>
+            </div>
+            <div class="preview-modal-body">
+                <!-- 顶部粘性生成类型栏：随滚动固定在顶部，不遮挡内容 -->
+                <div id="makeVideoGenBar" class="text-preview" style="position: sticky; top: 0; background: #fff; z-index: 20; border-bottom: 1px solid #e5e7eb; padding: 8px; display: none;">
+                    <h4 style="margin: 0;">⚙️ 生成类型</h4>
+                    <div class="gen-type-group" style="margin-top:8px;">
+                        <label class="gen-type-option">
+                            <input type="radio" name="genType" value="article" checked>
+                            <span class="gen-type-box">生成文章</span>
+                        </label>
+                        <label class="gen-type-option">
+                            <input type="radio" name="genType" value="video">
+                            <span class="gen-type-box">生成视频</span>
+                        </label>
+                    </div>
+                    <div id="generationStatus" class="muted" style="margin-top:6px; display:none;"></div>
+                </div>
+                <div class="muted" style="margin-bottom:8px;">最多选择 1 条新闻与 10 张图片；勾选按钮较小，避免遮挡内容。</div>
+                <div id="makeVideoContent" class="preview-content" style="gap:12px;">
+                    <iframe id="makeVideoIframe" style="width:100%; height:100%; border:none; background:white;"></iframe>
+                    <div id="makeVideoOutput" class="text-preview" style="display:none;">
+                        <h4>🧾 选择结果</h4>
+                        <div id="selectedNewsLink" class="muted">未选择新闻</div>
+                        <div id="selectedNewsPlain" class="muted" style="margin-top:4px;">未选择新闻链接</div>
+                        <div id="selectedImagesList" class="muted" style="margin-top:6px;">未选择图片</div>
+                        <div id="generationResult" class="muted" style="margin-top:8px; display:none;"></div>
+                        <!-- 文章内容展示与复制 -->
+                        <div id="articleContentBlock" class="text-preview" style="margin-top:10px; display:none;">
+                            <h4>📝 文章内容</h4>
+                            <pre id="articleContent" style="white-space: pre-wrap; word-wrap: break-word; background:#f9fafb; padding:8px; border:1px solid #e5e7eb; border-radius:6px; max-height:260px; overflow:auto;"></pre>
+                            <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+                                <button id="copyArticleBtn" class="action-btn btn-secondary">复制内容</button>
+                                <span id="copyArticleStatus" class="muted" style="display:none;">已复制</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="confirm-actions" style="margin-top:12px;">
+                    <button id="makeVideoCancelBtn" class="action-btn" onclick="closeMakeVideoModal()">取消</button>
+                    <button id="makeVideoConfirmBtn" class="action-btn btn-secondary" onclick="confirmMakeVideoSelection()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清空确认模态框 -->
+    <div id="confirmClearModal" class="preview-modal confirm-modal" style="display: none;">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <button class="preview-modal-close" onclick="closeConfirmClearModal()">&times;</button>
+            </div>
+            <div class="preview-modal-body">
+                <p class="confirm-text">确定要清空所有结果文件吗？此操作不可恢复。</p>
+                <div class="confirm-actions">
+                    <button id="cancelClearBtn" class="action-btn btn-secondary">取消</button>
+                    <button id="confirmClearBtn" class="action-btn" style="background: #dc2626; color: white;">确定清空</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mainTaskInterval = null;
+        let filterTaskInterval = null;
+        let schedulePollInterval = null;
+
+        // 更新任务状态显示
+        function updateTaskStatus(taskName, status) {
+            const progressEl = document.getElementById(taskName + 'Progress');
+            const statusEl = document.getElementById(taskName + 'Status');
+            
+            // 更新进度条
+            const progress = Math.max(0, Math.min(100, status.progress || 0));
+            progressEl.style.width = progress + '%';
+            
+            // 添加进度条动画效果
+            if (status.status === 'running') {
+                progressEl.style.transition = 'width 0.3s ease-in-out';
+                progressEl.classList.add('progress-active');
+            } else {
+                progressEl.classList.remove('progress-active');
+            }
+            
+            // 仅显示百分比数字（不显示步骤提示）
+            if (statusEl) {
+                statusEl.textContent = `${progress}%`;
+            }
+            
+            // 更新日志显示：正序输出，不自动滚动到最新条目
+            const logs = Array.isArray(status.logs) ? status.logs : [];
+            const logsPre = document.getElementById(taskName + 'LogsPre');
+            if (logsPre) {
+                if (logs.length === 0) {
+                    logsPre.textContent = '(暂无日志)';
+                } else {
+                    const lastLogs = logs.slice(-200);
+                    logsPre.textContent = lastLogs.join('\n');
+                }
+            }
+            // 更新按钮状态
+            if (taskName === 'main') {
+                const runMainBtn = document.getElementById('runMainBtn');
+                const runFilterBtn = document.getElementById('runFilterBtn');
+                
+                if (status.status === 'running') {
+                    runMainBtn.disabled = false;
+                    runMainBtn.textContent = '⏹ 停止获取';
+                    runMainBtn.className = 'action-btn btn-secondary';
+                    runMainBtn.onclick = stopMainTask;
+                    // 主任务运行时，禁用筛选按钮
+                    if (runFilterBtn) {
+                        runFilterBtn.disabled = true;
+                        runFilterBtn.className = 'action-btn btn-disabled';
+                    }
+                    const webLink = document.getElementById('webPreviewLink');
+                    if (webLink) webLink.style.display = 'none';
+                } else if (status.status === 'stopping') {
+                    runMainBtn.disabled = true;
+                    runMainBtn.textContent = '⏹ 正在停止...';
+                    runMainBtn.className = 'action-btn btn-disabled';
+                    if (runFilterBtn) {
+                        runFilterBtn.disabled = true;
+                        runFilterBtn.className = 'action-btn btn-disabled';
+                    }
+                } else if (status.status === 'completed') {
+                    runMainBtn.disabled = false;
+                    runMainBtn.textContent = '🚀 重新获取新闻';
+                    runMainBtn.className = 'action-btn btn-primary';
+                    runMainBtn.onclick = runMainTask;
+                    // 主任务完成后，触发一次当日汇总存在性检查，决定是否允许AI筛选
+                    try { checkTodaySummaryExists(); } catch (e) { console.warn('预检查失败', e); }
+                    
+                    // 显示预览内容并刷新结果列表
+                    if (status.result) {
+                        showPreview(status.result);
+                        loadResults(); // 刷新结果列表
+                        const webLink = document.getElementById('webPreviewLink');
+                        if (webLink) webLink.style.display = 'block';
+                    }
+                } else if (status.status === 'error') {
+                    runMainBtn.disabled = false;
+                    runMainBtn.textContent = '🚀 开始获取新闻';
+                    runMainBtn.className = 'action-btn btn-primary';
+                    runMainBtn.onclick = runMainTask;
+                    const webLink = document.getElementById('webPreviewLink');
+                    if (webLink) webLink.style.display = 'none';
+                    // 出错时也做一次预检查以更新按钮状态
+                    try { checkTodaySummaryExists(); } catch (e) {}
+                } else if (status.status === 'stopped') {
+                    runMainBtn.disabled = false;
+                    runMainBtn.textContent = '🚀 开始获取新闻';
+                    runMainBtn.className = 'action-btn btn-primary';
+                    runMainBtn.onclick = runMainTask;
+                    // 恢复筛选按钮状态（由预检查决定是否可用）
+                    try { checkTodaySummaryExists(); } catch (e) {}
+                }
+            } else if (taskName === 'filter') {
+                const runFilterBtn = document.getElementById('runFilterBtn');
+                const runMainBtn = document.getElementById('runMainBtn');
+                
+                if (status.status === 'running') {
+                    runFilterBtn.disabled = false;
+                    runFilterBtn.textContent = '⏹ 停止筛选';
+                    runFilterBtn.className = 'action-btn btn-secondary';
+                    runFilterBtn.onclick = stopFilterTask;
+                    // 筛选运行时，禁用主任务按钮
+                    if (runMainBtn) {
+                        runMainBtn.disabled = true;
+                        runMainBtn.className = 'action-btn btn-disabled';
+                    }
+                } else if (status.status === 'stopping') {
+                    runFilterBtn.disabled = true;
+                    runFilterBtn.textContent = '⏹ 正在停止...';
+                    runFilterBtn.className = 'action-btn btn-disabled';
+                    if (runMainBtn) {
+                        runMainBtn.disabled = true;
+                        runMainBtn.className = 'action-btn btn-disabled';
+                    }
+                } else if (status.status === 'completed') {
+                    runFilterBtn.disabled = false;
+                    runFilterBtn.textContent = '🤖 重新AI筛选';
+                    runFilterBtn.className = 'action-btn btn-secondary';
+                    runFilterBtn.onclick = runFilterTask;
+                    
+                    // 显示筛选结果
+                    if (status.result) {
+                        showFilterResult(status.result);
+                    }
+                    // 刷新结果列表并预览最新生成的页面
+                    try { loadResults(); } catch (e) {}
+                    // 筛选完成后也做一次预检查，保持按钮与提示一致
+                    try { checkTodaySummaryExists(); } catch (e) {}
+                } else if (status.status === 'error') {
+                    runFilterBtn.disabled = false;
+                    runFilterBtn.textContent = '🤖 AI智能筛选';
+                    runFilterBtn.className = 'action-btn btn-secondary';
+                    runFilterBtn.onclick = runFilterTask;
+                    try { checkTodaySummaryExists(); } catch (e) {}
+                } else if (status.status === 'stopped') {
+                    runFilterBtn.disabled = false;
+                    runFilterBtn.textContent = '🤖 AI智能筛选';
+                    runFilterBtn.className = 'action-btn btn-secondary';
+                    runFilterBtn.onclick = runFilterTask;
+                    if (runMainBtn) {
+                        runMainBtn.disabled = false;
+                        runMainBtn.className = 'action-btn btn-primary';
+                    }
+                }
+            }
+        }
+
+        // 显示预览内容（动态拉伸并居中显示）
+        function showPreview(htmlContent) {
+            const previewEl = document.getElementById('mainPreviewContent');
+            const safeHtml = typeof htmlContent === 'string' ? htmlContent : '';
+
+            // 注入更强的覆盖样式，确保内容能够拉伸并居中
+            const overrideStyle = `\n<style>\n  /* 基础重置 */
+  html, body { 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    width: 100% !important; 
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }\n  
+  /* 容器样式重置 */
+  .container, .header, .footer, .content { 
+    max-width: none !important; 
+    width: 100% !important; 
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+  }\n  
+  /* 预览内容竖向布局与滚动 */
+  body { 
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    min-height: 100vh !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }\n  
+  /* 内容区域最大化 */
+  .content, .word-group, .news-item {
+    width: 100% !important;
+    max-width: none !important;
+  }\n  
+  /* 网格与弹性布局统一设置 */
+  .word-header, .news-item, .info-item {
+    width: 100% !important;
+    max-width: none !important;
+  }\n  
+  /* 文本换行规则 */
+  .news-title, .news-summary, .word-name {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+  }\n</style>`;
+            
+            let patchedHtml = safeHtml;
+            if (safeHtml && safeHtml.includes('</head>')) {
+                patchedHtml = safeHtml.replace('</head>', `${overrideStyle}</head>`);
+            } else {
+                patchedHtml = `<!DOCTYPE html><html><head>${overrideStyle}</head><body>${safeHtml}</body></html>`;
+            }
+
+            const iframe = document.createElement('iframe');
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.background = 'transparent';
+            iframe.style.minWidth = '0';
+            // 移除最大宽度限制，让内容可以完全拉伸
+            // iframe.style.maxWidth = '1200px'; 
+            
+            try {
+                iframe.srcdoc = patchedHtml;
+            } catch (e) {
+                // 回退：以文本方式显示
+                const fallback = document.createElement('div');
+                fallback.innerHTML = `<div class=\"text-preview\"><h4>📄 获取结果</h4><pre>${safeHtml || '无内容'}</pre></div>`;
+                previewEl.innerHTML = '';
+                previewEl.appendChild(fallback);
+                previewEl.className = 'preview-content';
+                return;
+            }
+
+            // 内容加载后，动态调整报告宽度并居中
+            iframe.addEventListener('load', () => {
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                    
+                    // 获取预览容器的实际宽度
+                    const previewContainer = document.querySelector('.preview-container');
+                    const containerWidth = previewContainer ? previewContainer.clientWidth - 32 : 1200; // 减去内边距
+                    
+                    // 设置iframe内部body样式
+                    doc.body.style.width = '100%';
+                    doc.body.style.minWidth = '100%';
+                    doc.body.style.margin = '0';
+                    doc.body.style.padding = '16px';
+                    doc.body.style.display = 'flex';
+                    doc.body.style.flexDirection = 'column';
+                    doc.body.style.justifyContent = 'flex-start';
+                    doc.body.style.alignItems = 'stretch';
+                    doc.body.style.overflowX = 'auto';
+                    doc.body.style.overflowY = 'auto';
+                    doc.body.style.boxSizing = 'border-box';
+                    
+                    // 处理所有可能的容器元素
+                    const containers = doc.querySelectorAll('.container, .header, .footer, .content, .word-group');
+                    containers.forEach(container => {
+                        container.style.maxWidth = 'none';
+                        container.style.width = '100%';
+                        container.style.minWidth = '100%';
+                        container.style.marginLeft = '0';
+                        container.style.marginRight = '0';
+                        container.style.paddingLeft = '16px';
+                        container.style.paddingRight = '16px';
+                        container.style.boxSizing = 'border-box';
+                    });
+                    
+                    // 特殊处理主容器
+                    // 移除最大宽度限制，让内容可以完全拉伸
+                    // const mainContainer = doc.querySelector('.container') || doc.body;
+                    // mainContainer.style.maxWidth = Math.min(containerWidth, 1200) + 'px'; 
+                    const mainContainer = doc.querySelector('.container') || doc.body;
+                    mainContainer.style.maxWidth = 'none'; // 移除最大宽度限制
+                    mainContainer.style.width = '100%';
+                    mainContainer.style.margin = '0 auto';
+                    
+                    // 确保内容区域最大化
+                    const contentAreas = doc.querySelectorAll('.content, .word-group, .news-item, .word-header');
+                    contentAreas.forEach(area => {
+                        area.style.width = '100%';
+                        area.style.maxWidth = 'none';
+                    });
+                    
+                    // 优化文本显示
+                    const textElements = doc.querySelectorAll('.news-title, .news-summary, .word-name, .word-count');
+                    textElements.forEach(element => {
+                        element.style.wordBreak = 'break-word';
+                        element.style.overflowWrap = 'break-word';
+                        element.style.whiteSpace = 'normal';
+                    });
+                    
+                    
+                    
+                } catch (err) {
+                    console.warn('预览内容调整失败:', err);
+                    // 安静失败：不影响原始渲染
+                }
+            });
+
+            previewEl.innerHTML = '';
+            previewEl.appendChild(iframe);
+            previewEl.className = 'preview-content';
+        }
+
+        // 显示筛选结果（渲染到预览窗格）
+        function showFilterResult(result) {
+            const previewEl = document.getElementById('mainPreviewContent');
+            
+            // 尝试解析JSON结果
+            let filterContent = '<div class="filter-result">';
+            filterContent += '<h4>🤖 AI筛选结果</h4>';
+            
+            try {
+                // 如果结果是JSON格式
+                if (result.startsWith('{') || result.startsWith('[')) {
+                    const parsedResult = JSON.parse(result);
+                    
+                    if (Array.isArray(parsedResult)) {
+                        filterContent += '<div class="filtered-news-list">';
+                        parsedResult.forEach((item, index) => {
+                            filterContent += `
+                                <div class="filtered-news-item">
+                                    <div class="news-rank">#${index + 1}</div>
+                                    <div class="news-content">
+                                        <div class="news-title">${item.title || item.headline || '无标题'}</div>
+                                        <div class="news-summary">${item.summary || item.description || '无摘要'}</div>
+                                        ${item.url ? `<div class="news-url"><a href="${item.url}" target="_blank">查看原文</a></div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        filterContent += '</div>';
+                        filterContent += `<p class="filter-summary">AI筛选出 ${parsedResult.length} 条优质新闻</p>`;
+                    } else {
+                        // 单个对象
+                        filterContent += `<div class="single-result">${JSON.stringify(parsedResult, null, 2)}</div>`;
+                    }
+                } else {
+                    // 纯文本结果
+                    filterContent += `<div class="text-result"><pre>${result}</pre></div>`;
+                }
+            } catch (e) {
+                // 解析失败，显示原始文本
+                filterContent += `<div class="raw-result"><pre>${result}</pre></div>`;
+            }
+            
+            filterContent += '</div>';
+            previewEl.innerHTML = filterContent;
+            previewEl.className = 'preview-content';
+        }
+
+        // 轮询任务状态
+        async function pollTaskStatus(taskName) {
+            try {
+                const response = await fetch(`/api/task_status/${taskName}_task`);
+                const status = await response.json();
+                updateTaskStatus(taskName, status);
+                
+                if (status.status === 'running' || status.status === 'stopping') {
+                    return true; // 继续轮询
+                } else {
+                    return false; // 停止轮询
+                }
+            } catch (error) {
+                console.error('获取任务状态失败:', error);
+                return false;
+            }
+        }
+
+        // 运行主任务
+        async function runMainTask() {
+            try {
+                const response = await fetch('/api/run_main', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    // 开始轮询状态
+                    mainTaskInterval = setInterval(async () => {
+                        const shouldContinue = await pollTaskStatus('main');
+                        if (!shouldContinue && mainTaskInterval) {
+                            clearInterval(mainTaskInterval);
+                            mainTaskInterval = null;
+                        }
+                    }, 1000);
+                } else {
+                    const error = await response.json();
+                    alert('启动失败: ' + error.error);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            }
+        }
+
+        // 停止主任务
+        async function stopMainTask() {
+            try {
+                const response = await fetch('/api/stop_main', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    // 继续轮询直到非running/stopping
+                    if (!mainTaskInterval) {
+                        mainTaskInterval = setInterval(async () => {
+                            const shouldContinue = await pollTaskStatus('main');
+                            if (!shouldContinue && mainTaskInterval) {
+                                clearInterval(mainTaskInterval);
+                                mainTaskInterval = null;
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    const err = await response.json();
+                    alert('停止失败: ' + err.error);
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        }
+
+        // 运行筛选任务
+        async function runFilterTask() {
+            try {
+                // 获取配置信息
+                const configRes = await fetch('/api/config');
+                const config = await configRes.json();
+                
+                const filterConfigRes = await fetch('/api/news_filter_config');
+                const filterConfig = await filterConfigRes.json();
+                
+                // 检查必要的配置
+                const platform = config.platform || 'siliconflow';
+                const modelType = filterConfig.current_model || 'deepseek';
+                
+                let apiToken = '';
+                if (config.tokens) {
+                    if (platform === 'volcengine') apiToken = config.tokens.volcengine || '';
+                    else if (platform === 'siliconflow') apiToken = config.tokens.siliconflow || '';
+                    else if (platform === 'aliyun') apiToken = config.tokens.aliyun || '';
+                }
+                
+                if (!apiToken) {
+                    alert('请先到配置页面设置对应平台的API Token');
+                    return;
+                }
+                
+                // 获取筛选数量（默认使用配置中的 limit）
+                const limitInput = document.getElementById('filterLimit');
+                let limit = parseInt(limitInput.value || filterConfig.limit || 5, 10);
+                if (!Number.isFinite(limit) || limit <= 0) limit = 5;
+                
+                // 启动筛选任务
+                const response = await fetch('/api/run_filter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        platform: platform, 
+                        model_type: modelType, 
+                        api_token: apiToken,
+                        limit: limit
+                    })
+                });
+                
+                if (response.ok) {
+                    // 开始轮询状态
+                    filterTaskInterval = setInterval(async () => {
+                        const shouldContinue = await pollTaskStatus('filter');
+                        if (!shouldContinue && filterTaskInterval) {
+                            clearInterval(filterTaskInterval);
+                            filterTaskInterval = null;
+                        }
+                    }, 1000);
+                } else {
+                    const error = await response.json();
+                    alert('启动AI筛选失败: ' + error.error);
+                }
+            } catch (error) {
+                alert('获取配置失败: ' + error.message);
+            }
+        }
+
+        // 停止筛选任务
+        async function stopFilterTask() {
+            try {
+                const response = await fetch('/api/stop_filter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    if (!filterTaskInterval) {
+                        filterTaskInterval = setInterval(async () => {
+                            const shouldContinue = await pollTaskStatus('filter');
+                            if (!shouldContinue && filterTaskInterval) {
+                                clearInterval(filterTaskInterval);
+                                filterTaskInterval = null;
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    const err = await response.json();
+                    alert('停止AI筛选失败: ' + err.error);
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        }
+
+        // 绑定按钮事件
+        document.getElementById('runMainBtn').onclick = runMainTask;
+        document.getElementById('runFilterBtn').onclick = runFilterTask;
+
+        // -------- 当日汇总文件存在性预检查与AI筛选按钮联动 --------
+        function formatTodayFolderName() {
+            const d = new Date();
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}年${mm}月${dd}日`;
+        }
+
+        async function checkTodaySummaryExists() {
+            const runFilterBtn = document.getElementById('runFilterBtn');
+            const hint = document.getElementById('filterPrecheckMsg');
+            try {
+                const res = await fetch('/api/results');
+                if (!res.ok) throw new Error('无法获取结果列表');
+                const data = await res.json();
+                const today = formatTodayFolderName();
+                let hasToday = false;
+                let hasSummary = false;
+                if (data && Array.isArray(data.results)) {
+                    const todayEntry = data.results.find(r => r.date === today);
+                    if (todayEntry && Array.isArray(todayEntry.files)) {
+                        hasToday = true;
+                        hasSummary = !!todayEntry.files.find(f => f.type === 'html' && f.name === '当日汇总.html');
+                    }
+                }
+                const ok = hasToday && hasSummary;
+                runFilterBtn.disabled = !ok;
+                runFilterBtn.className = ok ? 'action-btn btn-secondary' : 'action-btn btn-disabled';
+                if (hint) {
+                    if (ok) {
+                        hint.style.display = 'none';
+                    } else {
+                        hint.textContent = '未检测到当日汇总.html，请先点击“开始获取新闻”';
+                        hint.style.display = 'inline';
+                    }
+                }
+            } catch (e) {
+                console.warn('检查当日汇总失败:', e);
+                // 失败时保守禁用按钮并显示提示
+                runFilterBtn.disabled = true;
+                runFilterBtn.className = 'action-btn btn-disabled';
+                if (hint) {
+                    hint.textContent = '无法检查结果，请先进行新闻获取';
+                    hint.style.display = 'inline';
+                }
+            }
+        }
+
+        // 页面加载时检查任务状态
+        window.addEventListener('load', async () => {
+            await pollTaskStatus('main');
+            await pollTaskStatus('filter');
+            // 页面加载时进行一次当日汇总存在性预检查
+            try { checkTodaySummaryExists(); } catch (e) { console.warn('预检查失败', e); }
+            
+                // 加载筛选数量默认值
+            try {
+                const filterConfigRes = await fetch('/api/news_filter_config');
+                const filterConfig = await filterConfigRes.json();
+                const limitInput = document.getElementById('filterLimit');
+                if (filterConfig && typeof filterConfig.limit !== 'undefined') {
+                    limitInput.value = filterConfig.limit;
+                }
+                // 监听筛选数量修改并自动保存到数据库（防丢失其他配置，合并保存）
+                if (limitInput) {
+                    const saveFilterLimit = async (val) => {
+                        try {
+                            let limit = parseInt(val, 10);
+                            if (!Number.isFinite(limit) || limit <= 0) {
+                                limit = 5;
+                            }
+                            const res = await fetch('/api/news_filter_config');
+                            const cfg = await res.json();
+                            // 仅保留相关字段，避免写入无关的展示字段
+                            const payload = {
+                                system_prompt: cfg.system_prompt,
+                                current_model: cfg.current_model,
+                                user_keywords: cfg.user_keywords,
+                                exclude_keywords: cfg.exclude_keywords,
+                                limit: limit
+                            };
+                            await fetch('/api/news_filter_config', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                        } catch (err) {
+                            console.warn('保存筛选数量失败', err);
+                        }
+                    };
+                    let debounceTimer = null;
+                    const triggerSave = (e) => {
+                        const val = e.target.value;
+                        if (debounceTimer) clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(() => saveFilterLimit(val), 400);
+                    };
+                    limitInput.addEventListener('change', triggerSave);
+                    limitInput.addEventListener('blur', triggerSave);
+                }
+            } catch (e) {
+                console.warn('加载筛选默认数量失败', e);
+            }
+
+            // 加载循环状态
+            await loadScheduleStatus();
+            
+            // 加载结果列表
+            await loadResults();
+        });
+        // 循环执行控制
+        async function loadScheduleStatus() {
+            try {
+                const res = await fetch('/api/schedule/status');
+                const data = await res.json();
+                const statusEl = document.getElementById('scheduleStatus');
+                const nextRunEl = document.getElementById('nextRunTime');
+                const intervalInput = document.getElementById('scheduleInterval');
+                
+                intervalInput.value = data.interval_minutes || intervalInput.value;
+                nextRunEl.textContent = data.next_run || '-';
+                statusEl.textContent = data.enabled ? '循环已启动' : '循环未启动';
+                statusEl.className = 'status-message ' + (data.enabled ? 'status-running' : 'status-idle');
+            } catch (e) {
+                console.error('获取循环状态失败', e);
+            }
+        }
+
+        async function startSchedule() {
+            try {
+                const interval = parseInt(document.getElementById('scheduleInterval').value || '30', 10);
+                const res = await fetch('/api/schedule/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ interval_minutes: interval })
+                });
+                if (res.ok) {
+                    await loadScheduleStatus();
+                    // 启动轮询，每5秒更新一次循环状态和主任务状态
+                    if (schedulePollInterval) {
+                        clearInterval(schedulePollInterval);
+                    }
+                    schedulePollInterval = setInterval(async () => {
+                        await loadScheduleStatus();
+                        await pollTaskStatus('main'); // 确保主任务状态也实时更新
+                    }, 5000);
+                } else {
+                    const err = await res.json();
+                    alert('启动循环失败: ' + (err.error || '未知错误'));
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        }
+
+        async function stopSchedule() {
+            try {
+                const res = await fetch('/api/schedule/stop', { method: 'POST' });
+                if (res.ok) {
+                    await loadScheduleStatus();
+                    if (schedulePollInterval) {
+                        clearInterval(schedulePollInterval);
+                        schedulePollInterval = null;
+                    }
+                } else {
+                    const err = await res.json();
+                    alert('停止循环失败: ' + (err.error || '未知错误'));
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        }
+        document.getElementById('startScheduleBtn').addEventListener('click', startSchedule);
+        document.getElementById('stopScheduleBtn').addEventListener('click', stopSchedule);
+
+        // 结果预览功能
+        async function loadResults() {
+            console.log('刷新按钮被点击，开始加载结果...');
+            const refreshBtn = document.getElementById('refreshResultsBtn');
+            if (refreshBtn) {
+                refreshBtn.disabled = true;
+                refreshBtn.textContent = '🔄 刷新中...';
+                refreshBtn.className = 'action-btn btn-disabled';
+            }
+            try {
+                console.log('发送请求到 /api/results');
+                const response = await fetch('/api/results');
+                console.log('收到响应:', response.status);
+                const data = await response.json();
+                console.log('解析数据:', data);
+                
+                const container = document.getElementById('resultsContainer');
+                
+                if (!data.results || data.results.length === 0) {
+                    container.innerHTML = '<div class="preview-empty"><div>暂无结果文件，请先运行新闻获取任务</div></div>';
+                    return;
+                }
+                
+                let html = '<div class="results-list">';
+                data.results.forEach(dateGroup => {
+                    html += `
+                        <div class="result-date-group">
+                            <div class="result-date-header">${dateGroup.date}</div>
+                            <div class="result-files">
+                    `;
+                    
+                    dateGroup.files.forEach(file => {
+                        const sizeKB = Math.round(file.size / 1024);
+                        const badgeClass = `badge-${file.type}`;
+                        const isBingImageHtml = (file.name === '图片抓取结果_Bing.html');
+                        html += `
+                            <div class="result-file-item">
+                                <div class="file-info">
+                                    <div class="file-name">
+                                        <span class="file-type-badge ${badgeClass}">${file.type}</span>
+                                        ${file.name}
+                                    </div>
+                                    <div class="file-meta">${sizeKB} KB • ${file.modified}</div>
+                                </div>
+                                <div class="file-actions">
+                                    <button class="file-btn btn-preview" onclick="previewFile('${file.path.replace(/\\/g, '/')}', '${file.name.replace(/'/g, "\\'")}')">预览</button>
+                                    <button class="file-btn btn-download" onclick="downloadFile('${file.path.replace(/\\/g, '/')}')">下载</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                container.innerHTML = html;
+                // 自动在预览窗格中显示最新结果
+                try {
+                    await previewLatestFromResults(data);
+                } catch (e) {
+                    console.warn('自动预览最新结果失败:', e);
+                }
+                // 刷新成功反馈
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = '✅ 已刷新';
+                    refreshBtn.className = 'action-btn btn-secondary';
+                    setTimeout(() => {
+                        refreshBtn.textContent = '🔄 刷新结果列表';
+                    }, 1200);
+                }
+            } catch (error) {
+                console.error('加载结果失败:', error);
+                document.getElementById('resultsContainer').innerHTML = 
+                    '<div class="preview-empty"><div style="color: #dc2626;">加载结果失败，请稍后重试</div></div>';
+                // 刷新失败反馈
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = '❌ 刷新失败';
+                    refreshBtn.className = 'action-btn btn-secondary';
+                    setTimeout(() => {
+                        refreshBtn.textContent = '🔄 刷新结果列表';
+                    }, 1800);
+                }
+            }
+        }
+
+        // 在预览窗格中展示最新结果（HTML 或 TXT）
+        async function previewLatestFromResults(data) {
+            const latest = findLatestResult(data);
+            if (!latest) return;
+            const encodedPath = encodeURIComponent(latest.path.replace(/\\/g, '/'));
+            const res = await fetch(`/api/preview/${encodedPath}`);
+            const previewData = await res.json();
+            if (!res.ok) return;
+            if (previewData.type === '.html') {
+                // 使用已有的 HTML 预览逻辑
+                showPreview(previewData.content);
+                // 更新独立预览链接指向当前文件
+                const webLink = document.getElementById('webPreviewLink');
+                if (webLink) {
+                    const a = webLink.querySelector('a');
+                    if (a) a.href = `/view/file/${encodedPath}`;
+                    webLink.style.display = 'block';
+                }
+            } else {
+                // 文本或JSON，直接填充到预览窗格
+                const contentDiv = document.getElementById('mainPreviewContent');
+                contentDiv.textContent = previewData.content || '';
+                contentDiv.className = 'preview-content';
+                const webLink = document.getElementById('webPreviewLink');
+                if (webLink) webLink.style.display = 'none';
+            }
+        }
+
+        function findLatestResult(data) {
+            if (!data || !Array.isArray(data.results)) return null;
+            let latest = null;
+            let latestTime = 0;
+            const parseTime = (s) => {
+                if (!s || typeof s !== 'string') return 0;
+                const [d, t] = s.split(' ');
+                const [yy, mm, dd] = (d || '').split('-').map(Number);
+                const [hh, mi, ss] = (t || '').split(':').map(Number);
+                const dt = new Date(yy || 0, (mm || 1) - 1, dd || 1, hh || 0, mi || 0, ss || 0);
+                return dt.getTime();
+            };
+            data.results.forEach(group => {
+                (group.files || []).forEach(file => {
+                    const ts = parseTime(file.modified);
+                    if (ts > latestTime) {
+                        latestTime = ts;
+                        latest = file;
+                    }
+                });
+            });
+            return latest;
+        }
+
+        async function previewFile(filePath, fileName) {
+            console.log('预览文件:', filePath, fileName);
+            try {
+                // 统一路径分隔符并编码
+                const encodedPath = encodeURIComponent(filePath.replace(/\\/g, '/'));
+                const response = await fetch(`/api/preview/${encodedPath}`);
+                const data = await response.json();
+                if (!response.ok) { alert('预览失败: ' + (data.error || '未知错误')); return; }
+
+                if (data.type === '.html') {
+                    if (fileName === '图片抓取结果_Bing.html') {
+                        openMakeVideoInPane(filePath, fileName, data.content);
+                    } else {
+                        showPreview(data.content);
+                        const webLink = document.getElementById('webPreviewLink');
+                        if (webLink) {
+                            const a = webLink.querySelector('a');
+                            if (a) a.href = `/view/file/${encodedPath}`;
+                            webLink.style.display = 'block';
+                        }
+                    }
+                } else {
+                    // 文本或JSON，直接渲染到主预览容器
+                    const contentDiv = document.getElementById('mainPreviewContent');
+                    contentDiv.textContent = data.content || '';
+                    contentDiv.className = 'preview-content';
+                    const webLink = document.getElementById('webPreviewLink');
+                    if (webLink) webLink.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('预览错误:', error);
+                alert('预览失败: ' + error.message);
+            }
+        }
+
+        function openMakeVideoInPane(filePath, fileName, htmlContent) {
+            makeVideoState.filePath = filePath;
+            makeVideoState.fileName = fileName;
+            makeVideoState.selectedNews = null;
+            makeVideoState.selectedImages = [];
+            const container = document.getElementById('mainPreviewContent');
+            const genBar = `
+                <div id="mvPane" style="position: sticky; top: 0; background: #fff; z-index: 20; padding: 8px; display: flex; justify-content: flex-end; gap: 8px; border-bottom: 1px solid #e5e7eb;">
+                    <button id="mvPaneGenArticleBtn" class="action-btn btn-secondary">生成文章</button>
+                    <button id="mvPaneGenVideoBtn" class="action-btn btn-secondary">生成视频</button>
+                </div>`;
+            const pane = document.createElement('div');
+            pane.style.cssText = 'display:flex; flex-direction:column; gap:12px; width:100%; height:100%;';
+            pane.innerHTML = genBar + `
+                <iframe id="mvPaneIframe" style="width:100%; flex:1 1 auto; min-height:0; border:none; background:white;"></iframe>`;
+            container.innerHTML = '';
+            container.className = '';
+            container.appendChild(pane);
+            const iframe = document.getElementById('mvPaneIframe');
+            iframe.srcdoc = htmlContent;
+            iframe.addEventListener('load', () => { try { setupMakeVideoSelection(iframe); updateMakeVideoOutput(); } catch(e){} }, { once: true });
+            const paneArticleBtn = document.getElementById('mvPaneGenArticleBtn');
+            const paneVideoBtn = document.getElementById('mvPaneGenVideoBtn');
+            if (paneArticleBtn) paneArticleBtn.addEventListener('click', () => confirmMakeVideoSelection('article'));
+            if (paneVideoBtn) paneVideoBtn.addEventListener('click', () => confirmMakeVideoSelection('video'));
+            const webLink = document.getElementById('webPreviewLink');
+            if (webLink) webLink.style.display = 'none';
+        }
+
+        function downloadFile(filePath) {
+            window.open(`/api/download/${filePath}`, '_blank');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+
+        async function clearResults() {
+            try {
+                const response = await fetch('/api/clear_results', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('结果文件已清空');
+                    await loadResults();
+                } else {
+                    alert('清空失败: ' + data.error);
+                }
+            } catch (error) {
+                alert('清空失败: ' + error.message);
+            }
+        }
+
+        function openConfirmClearModal() {
+            document.getElementById('confirmClearModal').style.display = 'block';
+        }
+
+        function closeConfirmClearModal() {
+            document.getElementById('confirmClearModal').style.display = 'none';
+        }
+
+        // ===== 制作视频选择逻辑 =====
+        const makeVideoState = {
+            filePath: '',
+            fileName: '',
+            selectedNews: null,
+            selectedImages: []
+        };
+
+        function closeMakeVideoModal() {
+            const modal = document.getElementById('makeVideoModal');
+            modal.style.display = 'none';
+            makeVideoState.filePath = '';
+            makeVideoState.fileName = '';
+            makeVideoState.selectedNews = null;
+            makeVideoState.selectedImages = [];
+            updateMakeVideoOutput();
+        }
+
+        function updateMakeVideoOutput() {
+            const newsEl = document.getElementById('selectedNewsLink');
+            const newsPlainEl = document.getElementById('mvPaneSelectedNewsPlain') || document.getElementById('selectedNewsPlain');
+            const imgsEl = document.getElementById('mvPaneSelectedImagesList') || document.getElementById('selectedImagesList');
+            if (newsEl) newsEl.style.display = 'none';
+            if (newsPlainEl) { newsPlainEl.textContent = ''; newsPlainEl.style.display = 'none'; }
+            if (imgsEl) { imgsEl.textContent = ''; imgsEl.style.display = 'none'; }
+            const articleBlock = document.getElementById('articleContentBlock');
+            if (articleBlock) articleBlock.style.display = 'none';
+            const genResEl = document.getElementById('generationResult');
+            if (genResEl) { genResEl.style.display = 'none'; genResEl.textContent = ''; genResEl.className = 'muted'; }
+        }
+
+        function showArticleContent(text) {
+            const block = document.getElementById('articleContentBlock');
+            const contentEl = document.getElementById('articleContent');
+            const copyStatus = document.getElementById('copyArticleStatus');
+            // 全局展示区元素
+            const globalBlock = document.getElementById('articleResultGlobal');
+            const globalContentEl = document.getElementById('articleResultContent');
+            const globalCopyStatus = document.getElementById('copyArticleGlobalStatus');
+            if (!block || !contentEl) return;
+            contentEl.textContent = text || '';
+            // 不展示模态框内部文章内容区域
+            block.style.display = 'none';
+            // 不展示“选择结果”容器
+            const outputBlock = document.getElementById('makeVideoOutput');
+            if (outputBlock) outputBlock.style.display = 'none';
+            if (copyStatus) copyStatus.style.display = 'none';
+            // 同步到全局展示区
+            if (globalBlock && globalContentEl) {
+                globalContentEl.textContent = text || '';
+                globalBlock.style.display = text ? '' : 'none';
+                if (globalCopyStatus) globalCopyStatus.style.display = 'none';
+            }
+            // 弹窗提示完成
+            showToast('文章生成完毕');
+        }
+
+        function copyArticleToClipboard() {
+            const contentEl = document.getElementById('articleContent');
+            const text = contentEl ? contentEl.textContent : '';
+            if (!text) { alert('无可复制内容'); return; }
+            navigator.clipboard.writeText(text).then(() => {
+                const statusEl = document.getElementById('copyArticleStatus');
+                if (statusEl) {
+                    statusEl.style.display = 'inline';
+                    statusEl.textContent = '已复制';
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+                }
+            }).catch(err => {
+                alert('复制失败：' + err.message);
+            });
+        }
+
+        // 轻量弹窗提示：2秒自动消失
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = 'background:#111827; color:#fff; padding:10px 12px; border-radius:6px; box-shadow:0 4px 10px rgba(0,0,0,0.15); font-size:14px; max-width:320px; opacity:0; transform:translateY(-4px); transition:opacity .2s ease, transform .2s ease;';
+            container.appendChild(toast);
+            requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-4px)';
+                setTimeout(() => { try { container.removeChild(toast); } catch(e){} }, 200);
+            }, 2000);
+        }
+
+        function showVideoDownload(url) {
+            // 不展示模态框底部区域
+            const outputBlock = document.getElementById('makeVideoOutput');
+            if (outputBlock) outputBlock.style.display = 'none';
+            // 不在该区域显示任何完成提示
+            const genRes = document.getElementById('generationResult');
+            if (genRes) { genRes.style.display = 'none'; genRes.textContent = ''; genRes.className = 'muted'; }
+            // 全局展示区
+            const globalBlock = document.getElementById('videoResultGlobal');
+            const linkEl = document.getElementById('videoDownloadLink');
+            if (globalBlock && linkEl) {
+                if (url) {
+                    linkEl.textContent = url;
+                    linkEl.href = url;
+                    globalBlock.style.display = '';
+                } else {
+                    linkEl.textContent = '';
+                    linkEl.removeAttribute('href');
+                    globalBlock.style.display = 'none';
+                }
+            }
+            // 弹窗提示完成
+            showToast('视频生成完毕');
+        }
+
+        async function openMakeVideoModal(filePath, fileName) {
+            try {
+                makeVideoState.filePath = filePath;
+                makeVideoState.fileName = fileName;
+                document.getElementById('makeVideoTitle').textContent = `生成内容 - ${fileName}`;
+                const modal = document.getElementById('makeVideoModal');
+                modal.style.display = 'block';
+                // 显示顶部粘性生成类型栏（避免选择阶段内容被遮挡）
+                const genTypeBlock = document.getElementById('makeVideoGenBar');
+                if (genTypeBlock) genTypeBlock.style.display = '';
+                // 生成结果区保持隐藏，避免遮挡选择区域；生成完成后再显示
+                const outputBlock = document.getElementById('makeVideoOutput');
+                if (outputBlock) outputBlock.style.display = 'none';
+                updateMakeVideoOutput();
+
+                const encodedPath = encodeURIComponent(filePath);
+                const res = await fetch(`/api/preview/${encodedPath}`);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || '预览读取失败');
+                if (data.type !== '.html') throw new Error('该文件不是HTML');
+
+                const iframe = document.getElementById('makeVideoIframe');
+                iframe.srcdoc = data.content;
+                iframe.addEventListener('load', () => { try { setupMakeVideoSelection(iframe); } catch (e) { console.warn(e); } }, { once: true });
+            } catch (e) {
+                alert('打开制作视频失败：' + e.message);
+            }
+        }
+
+        function setupMakeVideoSelection(iframe) {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            // 注入样式：图片选中高亮与顺序角标、文章单选按钮对齐到序号之前
+            const style = doc.createElement('style');
+            style.textContent = `
+              .card { position: relative; }
+              .card.selected { outline: 2px solid #2563eb; }
+              .mv-article-selected { border: 2px solid #2563eb !important; border-radius: 8px; box-shadow: 0 0 0 3px rgba(37,99,235,0.12) inset; }
+              .mv-order { position: absolute; top: 4px; left: 4px; background: #2563eb; color: #fff; border-radius: 10px; font-size: 10px; padding: 2px 6px; display: none; }
+              .card.selected .mv-order { display: inline-block; }
+              .title .mv-news-radio { margin-right: 6px; vertical-align: middle; }
+            `;
+            doc.head.appendChild(style);
+
+            // 已移除：iframe 内顶部“生成类型”选择栏，避免与主模态框重复
+
+            // 文章单选：将按钮插入到序号之前（.title 的第一个子节点之前）
+            const titleBlocks = Array.from(doc.querySelectorAll('.title'));
+            titleBlocks.forEach(titleEl => {
+                const label = doc.createElement('label');
+                label.className = 'mv-news-radio';
+                const input = doc.createElement('input');
+                input.type = 'radio';
+                input.name = 'mv-news-select';
+                const a = titleEl.querySelector('a');
+                const href = a ? (a.getAttribute('href') || a.href || '') : '';
+                input.checked = !!(makeVideoState.selectedNews && makeVideoState.selectedNews.href === href);
+                const getArticleContainer = (el) => {
+                    // 优先锁定包含关键词与图片的外层块
+                    return el.closest('.news')
+                        || el.closest('.card')
+                        || el.closest('.filtered-news-item')
+                        || el.closest('.news-item-preview')
+                        || el.closest('.news-item')
+                        || el.closest('div');
+                };
+                input.addEventListener('change', () => {
+                    if (input.checked) {
+                        const text = a ? (a.textContent || '').trim() : (titleEl.textContent || '').trim();
+                        makeVideoState.selectedNews = { href, text };
+                        // 取消其他 radio
+                        titleBlocks.forEach(tb => {
+                            const other = tb.querySelector('label.mv-news-radio input');
+                            if (other && other !== input) other.checked = false;
+                        });
+                        // 高亮选中文章所在的大框（card）
+                        const selectedCard = getArticleContainer(titleEl);
+                        Array.from(doc.querySelectorAll('.mv-article-selected')).forEach(el => el.classList.remove('mv-article-selected'));
+                        if (selectedCard) selectedCard.classList.add('mv-article-selected');
+                    } else {
+                        if (makeVideoState.selectedNews && makeVideoState.selectedNews.href === href) {
+                            makeVideoState.selectedNews = null;
+                        }
+                        const selectedCard = getArticleContainer(titleEl);
+                        if (selectedCard) selectedCard.classList.remove('mv-article-selected');
+                    }
+                    updateMakeVideoOutput();
+                });
+                label.appendChild(input);
+                titleEl.insertBefore(label, titleEl.firstChild);
+            });
+
+            // 初始化：若已有选中的文章，应用高亮边框
+            const checkedRadio = doc.querySelector('label.mv-news-radio input:checked');
+            if (checkedRadio) {
+                const tEl = checkedRadio.closest('.title');
+                const cEl = tEl ? (tEl.closest('.news') || tEl.closest('.card') || tEl.closest('.filtered-news-item') || tEl.closest('.news-item-preview') || tEl.closest('.news-item') || tEl.closest('div')) : null;
+                if (cEl) cEl.classList.add('mv-article-selected');
+            }
+
+            // 图片多选：点击图片本身即勾选（保持选择顺序），“打开原图”链接照常跳转
+            const cards = Array.from(doc.querySelectorAll('.card'));
+            const maxImages = 10;
+            // 初始化卡片的角标元素
+            cards.forEach(card => {
+                let badge = card.querySelector('.mv-order');
+                if (!badge) {
+                    badge = doc.createElement('span');
+                    badge.className = 'mv-order';
+                    badge.textContent = '1';
+                    card.appendChild(badge);
+                }
+            });
+            const refreshSelectionVisual = () => {
+                const orderMap = new Map(makeVideoState.selectedImages.map((it, i) => [it.src, i + 1]));
+                cards.forEach(card => {
+                    const img = card.querySelector('img');
+                    if (!img) return;
+                    const src = img.getAttribute('src') || '';
+                    const order = orderMap.get(src);
+                    const badge = card.querySelector('.mv-order');
+                    if (order) {
+                        card.classList.add('selected');
+                        if (badge) badge.textContent = String(order);
+                    } else {
+                        card.classList.remove('selected');
+                        if (badge) badge.textContent = '1';
+                    }
+                });
+            };
+            cards.forEach(card => {
+                const img = card.querySelector('img');
+                if (!img) return;
+                img.style.cursor = 'pointer';
+                const src = img.getAttribute('src') || '';
+                // 初始状态
+                if (makeVideoState.selectedImages.some(it => it.src === src)) {
+                    card.classList.add('selected');
+                }
+                img.addEventListener('click', () => {
+                    const idx = makeVideoState.selectedImages.findIndex(it => it.src === src);
+                    if (idx >= 0) {
+                        // 取消选择
+                        makeVideoState.selectedImages.splice(idx, 1);
+                    } else {
+                        if (makeVideoState.selectedImages.length >= maxImages) {
+                            alert('最多选择10张图片');
+                            return;
+                        }
+                        makeVideoState.selectedImages.push({ src });
+                    }
+                    refreshSelectionVisual();
+                    updateMakeVideoOutput();
+                });
+            });
+            // 首次刷新选中视觉
+            refreshSelectionVisual();
+        }
+
+        async function confirmMakeVideoSelection(genType) {
+            const count = makeVideoState.selectedImages.length;
+            const news = makeVideoState.selectedNews;
+            // 确定生成类型（优先使用传入参数，其次回退到模态框单选）
+            if (!genType) {
+                const genChecked = document.querySelector('#makeVideoModal input[name="genType"]:checked');
+                genType = genChecked ? genChecked.value : 'article';
+            }
+            if (genType === 'article' && !news) {
+                alert('请先选择一条新闻标题链接');
+                return;
+            }
+
+            // 生成视频：需要至少一张图片
+            if (genType === 'video' && count === 0) {
+                alert('请至少选择一张图片');
+                return;
+            }
+
+            if (genType === 'video') {
+                const paneArticleBtn = document.getElementById('mvPaneGenArticleBtn');
+                const paneVideoBtn = document.getElementById('mvPaneGenVideoBtn');
+                try {
+                    if (paneArticleBtn && paneVideoBtn) {
+                        paneArticleBtn.disabled = true;
+                        paneVideoBtn.disabled = true;
+                        paneVideoBtn.textContent = '生成中...';
+                    } else {
+                        const confirmBtn = document.getElementById('makeVideoConfirmBtn');
+                        if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '生成中...'; }
+                    }
+
+                    // 读取后端保存的 Coze 配置（优先使用 workflow 的 bot_id 与 token）
+                    const confRes = await fetch('/api/config');
+                    const conf = await confRes.json();
+                    const wfConf = (conf.coze && conf.coze.workflow) || {};
+                    const chatConf = (conf.coze && conf.coze.chat) || {};
+                    const workflowId = wfConf.bot_id || wfConf.workflow_id || chatConf.bot_id || '';
+                    const apiToken = wfConf.api_token || chatConf.api_token || '';
+
+                    const payload = {
+                        images: makeVideoState.selectedImages.map(it => it.src),
+                        article: { title: news.text || '', url: news.href },
+                        duration_per_image: 2,
+                        workflow_id: workflowId,
+                        api_token: apiToken
+                    };
+
+                    const res = await fetch('/api/coze/workflow_run', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        const url = (data && data.download_url) || '';
+                        showVideoDownload(url);
+                    } else {
+                        const errMsg = (data && data.error) ? data.error : '未知错误';
+                        alert('生成失败: ' + errMsg);
+                    }
+                } catch (err) {
+                    console.error('后端生成失败：', err);
+                    alert('生成异常: ' + err.message);
+                } finally {
+                    if (paneArticleBtn && paneVideoBtn) {
+                        paneArticleBtn.disabled = false;
+                        paneVideoBtn.disabled = false;
+                        paneVideoBtn.textContent = '生成视频';
+                    } else {
+                        const confirmBtn = document.getElementById('makeVideoConfirmBtn');
+                        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+                    }
+                }
+                return;
+            }
+            // 生成文章：调用后端 Coze Chat
+            try {
+                const paneArticleBtn2 = document.getElementById('mvPaneGenArticleBtn');
+                const paneVideoBtn2 = document.getElementById('mvPaneGenVideoBtn');
+                if (paneArticleBtn2 && paneVideoBtn2) {
+                    paneArticleBtn2.disabled = true;
+                    paneVideoBtn2.disabled = true;
+                    paneArticleBtn2.textContent = '生成中...';
+                } else {
+                    const confirmBtn = document.getElementById('makeVideoConfirmBtn');
+                    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '生成中...'; }
+                }
+
+                // 只传递文章链接，不包含标题文本
+                const input_article = news.href || '';
+                // 文章生成不传递图片素材
+                const input_video = [];
+                // 读取后端保存的 Coze Chat 配置
+                const confRes = await fetch('/api/config');
+                const conf = await confRes.json();
+                const chatConf = (conf.coze && conf.coze.chat) || {};
+                // 使用插件的默认提示词作为文章生成的 input_prompt
+                const DEFAULT_ARTICLE_PROMPT = '输出格式：推文；字数长度：500~2000字';
+                const payload = {
+                    input_prompt: DEFAULT_ARTICLE_PROMPT,
+                    input_article,
+                    input_video,
+                    bot_id: chatConf.bot_id || '',
+                    api_token: chatConf.api_token || ''
+                };
+
+                const res = await fetch('/api/coze/chat_generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    const content = (data && data.content) || '';
+                    showArticleContent(content);
+                } else {
+                    const errMsg = (data && data.error) ? data.error : '未知错误';
+                    alert('生成失败: ' + errMsg);
+                }
+                if (paneArticleBtn2 && paneVideoBtn2) {
+                    paneArticleBtn2.disabled = false;
+                    paneVideoBtn2.disabled = false;
+                    paneArticleBtn2.textContent = '生成文章';
+                } else {
+                    const confirmBtn = document.getElementById('makeVideoConfirmBtn');
+                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+                }
+            } catch (err) {
+                console.error('后端生成失败：', err);
+                alert('生成异常: ' + err.message);
+                const confirmBtn = document.getElementById('makeVideoConfirmBtn');
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+            }
+        }
+
+        // 绑定结果预览相关事件
+        document.getElementById('refreshResultsBtn').addEventListener('click', loadResults);
+        document.getElementById('clearResultsBtn').addEventListener('click', openConfirmClearModal);
+        document.getElementById('cancelClearBtn').addEventListener('click', closeConfirmClearModal);
+        document.getElementById('confirmClearBtn').addEventListener('click', async () => {
+            await clearResults();
+            closeConfirmClearModal();
+        });
+
+        // 复制文章按钮绑定
+        document.getElementById('copyArticleBtn').addEventListener('click', copyArticleToClipboard);
+        document.getElementById('copyArticleGlobalBtn').addEventListener('click', function() {
+            const el = document.getElementById('articleResultContent');
+            const text = el ? el.textContent : '';
+            if (!text) { alert('无可复制内容'); return; }
+            navigator.clipboard.writeText(text).then(() => {
+                const statusEl = document.getElementById('copyArticleGlobalStatus');
+                if (statusEl) {
+                    statusEl.style.display = 'inline';
+                    statusEl.textContent = '已复制';
+                    setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+                }
+            }).catch(err => {
+                alert('复制失败：' + (err && err.message ? err.message : err));
+            });
+        });
+
+        // 点击制作视频模态框背景关闭
+        document.getElementById('makeVideoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMakeVideoModal();
+            }
+        });
+
+        // 点击模态框背景关闭
+        document.getElementById('previewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePreviewModal();
+            }
+        });
+        // 点击清空确认模态框背景关闭
+        document.getElementById('confirmClearModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmClearModal();
+            }
+        });
+
+        // 平台侧栏：加载与保存选择（不影响其他功能模块）
+        async function initPlatformSidebar() {
+            try {
+                const res = await fetch('/api/platforms');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || '获取平台列表失败');
+
+                const container = document.querySelector('.container');
+                const sidebar = document.getElementById('platformSidebar');
+                const list = document.getElementById('platformList');
+                if (!container || !sidebar || !list) return;
+
+                const selected = new Set((data.selected_ids || []).map(String));
+                list.innerHTML = '';
+                (data.all || []).forEach(p => {
+                    const id = String(p.id || '').trim();
+                    if (!id) return;
+                    const name = p.name || id;
+                    const row = document.createElement('label');
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.dataset.id = id;
+                    cb.checked = selected.has(id);
+                    const text = document.createElement('span');
+                    text.textContent = name;
+                    row.appendChild(cb);
+                    row.appendChild(text);
+                    list.appendChild(row);
+                });
+
+                // 展示侧栏并为容器添加左边距（不改动现有内容结构）
+                sidebar.style.display = '';
+                container.classList.add('has-sidebar');
+
+                // 全选按钮：勾选全部并保存
+                const selectAllBtn = document.getElementById('selectAllBtn');
+                if (selectAllBtn) {
+                    selectAllBtn.addEventListener('click', async () => {
+                        const cbs = Array.from(list.querySelectorAll('input[type="checkbox"]'));
+                        const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+                        let checkedIds = [];
+                        if (allChecked) {
+                            // 当前已全选，点击则取消全选
+                            cbs.forEach(cb => { cb.checked = false; });
+                            checkedIds = [];
+                        } else {
+                            // 当前非全选，点击则全选
+                            cbs.forEach(cb => { cb.checked = true; });
+                            checkedIds = cbs.map(el => el.dataset.id);
+                        }
+                        try {
+                            const saveRes = await fetch('/api/platforms', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ selected_ids: checkedIds })
+                            });
+                            const saveData = await saveRes.json();
+                            const stat = document.getElementById('platformSaveStatus');
+                            if (saveRes.ok) {
+                                if (stat) {
+                                    stat.textContent = `已保存（${checkedIds.length}个平台）`;
+                                    stat.style.display = 'block';
+                                    setTimeout(() => { stat.style.display = 'none'; }, 1500);
+                                }
+                                if (typeof showToast === 'function') { showToast('平台选择已保存'); }
+                            } else {
+                                alert('保存失败：' + (saveData && saveData.error ? saveData.error : '未知错误'));
+                            }
+                        } catch (err) {
+                            alert('保存异常：' + err.message);
+                        }
+                    });
+                }
+
+                // 勾选变化即保存
+                list.addEventListener('change', async (e) => {
+                    const t = e.target;
+                    if (!t || t.tagName !== 'INPUT' || t.type !== 'checkbox') return;
+                    const checkedIds = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.dataset.id);
+                    try {
+                        const saveRes = await fetch('/api/platforms', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ selected_ids: checkedIds })
+                        });
+                        const saveData = await saveRes.json();
+                        const stat = document.getElementById('platformSaveStatus');
+                        if (saveRes.ok) {
+                            if (stat) {
+                                stat.textContent = `已保存（${checkedIds.length}个平台）`;
+                                stat.style.display = 'block';
+                                setTimeout(() => { stat.style.display = 'none'; }, 1500);
+                            }
+                            showToast('平台选择已保存');
+                        } else {
+                            alert('保存失败：' + (saveData && saveData.error ? saveData.error : '未知错误'));
+                        }
+                    } catch (err) {
+                        alert('保存异常：' + err.message);
+                    }
+                });
+            } catch (err) {
+                console.warn('平台侧栏初始化失败：', err);
+            }
+        }
+
+        window.addEventListener('load', initPlatformSidebar);
+    </script>
+</body>
+</html>
+<script>
+  // 移除主界面上的平台侧栏初始化，平台选择迁移至配置页
+  try { window.removeEventListener('load', initPlatformSidebar); } catch (e) {}
+</script>
